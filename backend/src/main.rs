@@ -1,7 +1,8 @@
 use std::io;
 
+use backend::http::Http;
 use tokio::{
-    io::{AsyncBufReadExt, BufReader},
+    io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::{TcpListener, TcpStream},
 };
 
@@ -16,18 +17,13 @@ async fn main() -> io::Result<()> {
     Ok(())
 }
 
-async fn handle_socket(mut socket: TcpStream) {
-    let buf_reader = BufReader::new(&mut socket);
-    let mut iter = buf_reader.lines();
-    let http_request = {
-        let mut ret = vec![];
-        while let Ok(Some(next)) = iter.next_line().await {
-            if next.is_empty() {
-                break;
-            }
-            ret.push(next);
-        }
-        ret
-    };
-    println!("{http_request:#?}");
+async fn handle_socket(mut stream: TcpStream) {
+    let mut buf_reader = BufReader::new(&mut stream);
+    let data = Http::new(&mut buf_reader).await;
+    
+    println!("{data:#?}");
+
+    let response = "HTTP/1.1 200 OK\r\n\r\nhello";
+
+    stream.write_all(response.as_bytes()).await.unwrap();
 }
