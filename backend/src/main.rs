@@ -1,33 +1,28 @@
-use std::io;
+use std::{convert::Infallible, io};
 
+use backend::http::Header;
 use tokio::{
-    io::{AsyncBufReadExt, BufReader},
+    io::AsyncWriteExt,
     net::{TcpListener, TcpStream},
 };
 
 #[tokio::main]
-async fn main() -> io::Result<()> {
+async fn main() -> io::Result<Infallible> {
     let listener = TcpListener::bind("127.0.0.1:8444").await?;
 
     loop {
-        let (socket, x) = listener.accept().await?;
+        let (socket, _) = listener.accept().await?;
         handle_socket(socket).await;
     }
-    Ok(())
 }
 
-async fn handle_socket(mut socket: TcpStream) {
-    let buf_reader = BufReader::new(&mut socket);
-    let mut iter = buf_reader.lines();
-    let http_request = {
-        let mut ret = vec![];
-        while let Ok(Some(next)) = iter.next_line().await {
-            if next.is_empty() {
-                break;
-            }
-            ret.push(next);
-        }
-        ret
-    };
-    println!("{http_request:#?}");
+async fn handle_socket(mut stream: TcpStream) {
+    let data = Header::new(&mut stream).await;
+
+    println!("{data:#?}");
+
+    let response = "HTTP/1.1 200 OK\r\n\r\nhello";
+    if data.is_ok() {
+        stream.write_all(response.as_bytes()).await.unwrap();
+    }
 }
