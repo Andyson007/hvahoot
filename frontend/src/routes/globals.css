@@ -1,0 +1,14 @@
+:root {
+  --main: #4CAF50;
+  --secondary: #FF9800;
+  --header-font: 'Poppins', sans-serif;
+  --main-font: 'Open Sans', sans-serif;
+}
+
+* {
+  font-family: var(--main-font);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--header-font);
+}
