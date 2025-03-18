@@ -60,3 +60,9 @@ div.center {
     color: var(--fg-main);
   }
 }
+
+.error {
+  flex: 1;
+  font-style: italic;
+  text-align: center;
+}
