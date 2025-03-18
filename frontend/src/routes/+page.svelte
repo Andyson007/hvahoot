@@ -1,6 +1,6 @@
 <script>
   import Centermain from "$lib/components/centermain.svelte";
-import Header from "$lib/components/header.svelte";
+  import Header from "$lib/components/header.svelte";
 
 </script>
 

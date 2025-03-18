@@ -8,7 +8,7 @@
       <img src="/logo.png" alt="Hvahoot" draggable="false">
     </a>
     <nav>
-      <a href="/">Logg inn</a>
+      <a class="button" href="/">Logg inn</a>
     </nav>
   </header>
 </div>

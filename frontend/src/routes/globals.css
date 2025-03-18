@@ -6,10 +6,12 @@
 
   --fg: #050f14;
   --bg: #ffffff;
+  --fg-main: #ffffff;
 }
 
 html, body {
   margin: 0;
+  height: 100%;
 }
 
 * {
@@ -49,4 +51,12 @@ div.center {
   align-items: center;
   justify-content: center;
   color: var(--fg);
+  background-color: var(--bg);
+  font-size: 1rem;
+  font-weight: 500;
+
+  &:hover {
+    background-color: var(--main);
+    color: var(--fg-main);
+  }
 }
