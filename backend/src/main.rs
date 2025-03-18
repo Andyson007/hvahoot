@@ -1,11 +1,12 @@
-use rocket::{get, launch, routes};
+use rocket::{get, routes};
 
-#[launch]
-fn rocket() -> _ {
-    rocket::build().mount("/", routes![index])
+#[rocket::main]
+async fn main() -> Result<(), rocket::Error> {
+    rocket::build().mount("/", routes![index]).launch().await?;
+    Ok(())
 }
 
 #[get("/")]
 fn index() -> &'static str {
-    "foo"
+    "nk"
 }
