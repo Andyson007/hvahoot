@@ -1,1 +1,2 @@
 ALTER TABLE hvahoots DROP COLUMN uuid;
+ALTER TABLE hvahoots DROP COLUMN name;

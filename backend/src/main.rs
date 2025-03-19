@@ -5,7 +5,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use backend::{hvahoot::get_uuid, login::{login, signup}};
+use backend::{
+    hvahoot::{create_hvahoot, get_uuid},
+    login::{login, signup},
+};
 use rocket::{fs::NamedFile, get, routes};
 use sqlx::PgPool;
 
@@ -22,7 +25,7 @@ async fn main() -> Result<(), rocket::Error> {
 
     rocket::build()
         .manage(pool)
-        .mount("/", routes![index, login, signup, get_uuid])
+        .mount("/", routes![index, login, signup, get_uuid, create_hvahoot])
         .launch()
         .await?;
     Ok(())
