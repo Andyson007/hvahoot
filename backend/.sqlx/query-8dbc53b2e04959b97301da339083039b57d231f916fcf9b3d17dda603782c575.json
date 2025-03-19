@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT username, id\n        FROM tokens\n            LEFT JOIN clients\n                ON clients.id = tokens.client\n        WHERE token=$1 AND expires>STATEMENT_TIMESTAMP()",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "username",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "id",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bpchar"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "8dbc53b2e04959b97301da339083039b57d231f916fcf9b3d17dda603782c575"
+}

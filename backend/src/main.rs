@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate rocket;
 
 use std::{
@@ -6,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use backend::login::{login, signup};
+use backend::{hvahoot::get_uuid, login::{login, signup}};
 use rocket::{fs::NamedFile, get, routes};
 use sqlx::PgPool;
 
@@ -23,7 +22,7 @@ async fn main() -> Result<(), rocket::Error> {
 
     rocket::build()
         .manage(pool)
-        .mount("/", routes![index, login, signup])
+        .mount("/", routes![index, login, signup, get_uuid])
         .launch()
         .await?;
     Ok(())

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO hvahoots (owner, uuid) VALUES ($1, $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Bpchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "967669d0881fcc3c9187f01bc1e8e14995b8eea9e2c0cf10e121987a733f7402"
+}

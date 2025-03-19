@@ -1,8 +1,3 @@
-use std::{
-    env, fs,
-    path::{Path, PathBuf},
-};
-
 use argon2::{
     Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
     password_hash::{SaltString, rand_core::OsRng},
@@ -10,11 +5,12 @@ use argon2::{
 use rocket::{
     State,
     futures::TryFutureExt,
-    http::CookieJar,
+    http::{CookieJar, Status},
     post,
+    request::{FromRequest, Outcome, Request},
     serde::{Deserialize, json::Json},
 };
-use sqlx::{Acquire, Executor, PgPool};
+use sqlx::{Acquire, PgPool};
 use uuid::Uuid;
 
 #[derive(Deserialize)]
@@ -22,6 +18,48 @@ use uuid::Uuid;
 pub struct Login {
     username: String,
     password: String,
+}
+
+pub struct User {
+    pub username: String,
+    pub id: i32,
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for User {
+    type Error = ();
+
+    async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        let Some(pool) = req.guard::<&State<PgPool>>().await.succeeded() else {
+            return Outcome::Error((Status::InternalServerError, ()));
+        };
+        let Some(token) = req.cookies().get("token") else {
+            return Outcome::Error((Status::Forbidden, ()));
+        };
+        let Ok(mut pool_connection) = pool.acquire().await.map_err(|e| {
+            println!("{e}");
+        }) else {
+            return Outcome::Error((Status::InternalServerError, ()));
+        };
+        let Ok(connection) = pool_connection.acquire().await.map_err(|e| println!("{e}")) else {
+            return Outcome::Error((Status::InternalServerError, ()));
+        };
+
+        let Ok(record) = sqlx::query!(
+            r#"SELECT username, id
+        FROM tokens
+            LEFT JOIN clients
+                ON clients.id = tokens.client
+        WHERE token=$1 AND expires>STATEMENT_TIMESTAMP()"#,
+            token.to_string()
+        )
+        .fetch_one(connection)
+        .await
+        else {
+            return Outcome::Error((Status::Unauthorized, ()));
+        };
+        Outcome::Success(User { username: record.username, id: record.id })
+    }
 }
 
 #[post("/login", data = "<login>")]
