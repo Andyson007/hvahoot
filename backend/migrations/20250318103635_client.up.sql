@@ -1,4 +1,5 @@
 CREATE TABLE clients (
   id SERIAL PRIMARY KEY,
+  username TEXT NOT NULL,
   phc TEXT NOT NULL
 );
