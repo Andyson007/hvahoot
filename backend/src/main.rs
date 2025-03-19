@@ -41,7 +41,6 @@ async fn main() -> Result<(), rocket::Error> {
 #[get("/<path..>")]
 async fn index(path: PathBuf) -> Option<NamedFile> {
     let path = Path::new("../frontend/build/").join(path);
-    println!("{:?}", fs::metadata(&path));
     match fs::metadata(&path) {
         Ok(x) if x.is_dir() => NamedFile::open(path.join("index.html")).await.ok(),
         Ok(x) if x.is_file() => NamedFile::open(path).await.ok(),
