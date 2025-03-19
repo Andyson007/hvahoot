@@ -21,7 +21,11 @@ use uuid::Uuid;
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
-    let Ok(pool) = PgPool::connect("postgres://hvahoot:aoeu@localHost:5432/hvahoot").await else {
+    let Ok(pool) = PgPool::connect(
+        &env::var("DATABASE_URL").expect("please set the DATABASE_URL environment variable"),
+    )
+    .await
+    else {
         println!("failed to connect to pool\nexiting");
         return Ok(());
     };
