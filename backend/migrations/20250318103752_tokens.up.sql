@@ -1,4 +1,5 @@
 CREATE TABLE tokens (
-  token VARCHAR(64) NOT NULL,
+  token CHAR(36) NOT NULL,
+  client INTEGER REFERENCES clients(id),
   expires TIMESTAMP DEFAULT STATEMENT_TIMESTAMP() + INTERVAL '1 day'
 );
