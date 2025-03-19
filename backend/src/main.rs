@@ -16,7 +16,7 @@ use rocket::{
     post, routes,
     serde::{Deserialize, json::Json},
 };
-use sqlx::{Acquire, Executor, PgPool};
+use sqlx::{Acquire, PgPool};
 use uuid::Uuid;
 
 #[rocket::main]
@@ -41,10 +41,14 @@ async fn main() -> Result<(), rocket::Error> {
 #[get("/<path..>")]
 async fn index(path: PathBuf) -> Option<NamedFile> {
     let path = Path::new("../frontend/build/").join(path);
-    if fs::metadata(&path).ok()?.is_dir() {
-        NamedFile::open(path.join("index.html")).await.ok()
-    } else {
-        NamedFile::open(path).await.ok()
+    println!("{:?}", fs::metadata(&path));
+    match fs::metadata(&path) {
+        Ok(x) if x.is_dir() => NamedFile::open(path.join("index.html")).await.ok(),
+        Ok(x) if x.is_file() => NamedFile::open(path).await.ok(),
+        Err(_) => NamedFile::open(format!("{}.html", path.to_str()?))
+            .await
+            .ok(),
+        _ => None,
     }
 }
 
