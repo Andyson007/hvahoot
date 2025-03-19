@@ -6,12 +6,17 @@
 
   let error: string = $state('');
 
-  async function login () {
-    const resp = await fetch('/api/login', {
+  async function login (ev: SubmitEvent) {
+    ev.preventDefault();
+
+    const resp = await fetch('/login', {
       method: 'POST',
       body: JSON.stringify({
         username, password
-      })
+      }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
 
     if (!resp.ok) error = (await resp.json().catch(() => {return {message: 'An error occured while parsing the response'}})).message;
@@ -19,7 +24,7 @@
 </script>
 
 <main>
-  <form onsubmit={() => login()}>
+  <form onsubmit={login}>
     <Errormessage error={error} />
     <input type="text" bind:value={username}>
     <input type="password" bind:value={password}>

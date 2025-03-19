@@ -8,7 +8,8 @@
       <img src="/logo.png" alt="Hvahoot" draggable="false">
     </a>
     <nav>
-      <a class="button" href="/">Logg inn</a>
+      <a class="button" href="/login">Registrér</a>
+      <a class="button" href="/signup">Logg inn</a>
     </nav>
   </header>
 </div>
@@ -42,6 +43,9 @@
   }
   nav {
     height: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: .5rem;
   }
 
   nav > a {
