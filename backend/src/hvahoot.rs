@@ -20,7 +20,7 @@ pub struct HvaHootData {
 pub struct Question {
     question: String,
     answer: i32,
-    answers: [String; 4],
+    answers: Vec<String>,
 }
 
 #[post("/api/create", data = "<hvahoot>")]
