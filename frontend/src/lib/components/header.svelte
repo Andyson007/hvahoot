@@ -1,0 +1,59 @@
+<script lang="typescript">
+
+</script>
+
+<div class="headerpadding">
+  <header>
+    <a href="/">
+      <img src="/logo.png" alt="Hvahoot" draggable="false">
+    </a>
+    <nav>
+      <a class="button" href="/">Logg inn</a>
+    </nav>
+  </header>
+</div>
+
+<style>
+  .headerpadding {
+    height: 5rem;
+    display: flex;
+  }
+  header {
+    height: 5rem;
+    padding: 1rem;
+    box-sizing: border-box;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: .5rem;
+    justify-content: space-between;
+    background-color: var(--bg);
+
+    & > a {
+      flex: 0;
+    }
+  }
+  img {
+    height: 100%;
+    user-select: none;
+  }
+  nav {
+    height: 100%;
+  }
+
+  nav > a {
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: .125rem solid var(--main);
+    padding: .5rem;
+    width: fit-content;
+    text-decoration: none;
+    color: inherit;
+  }
+</style>

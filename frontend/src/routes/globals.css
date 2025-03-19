@@ -1,0 +1,68 @@
+:root {
+  --main: #4CAF50;
+  --secondary: #FF9800;
+  --header-font: 'Poppins', sans-serif;
+  --main-font: 'Open Sans', sans-serif;
+
+  --fg: #050f14;
+  --bg: #ffffff;
+  --fg-main: #ffffff;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+}
+
+* {
+  font-family: var(--main-font);
+  color: var(--fg);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--header-font);
+  font-weight: 500;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+blockquote {
+  padding: .5rem 1rem;
+  margin: 0;
+  border-left: .125rem solid var(--main);
+}
+
+div.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.button {
+  padding: .5rem;
+  border: .125rem solid var(--main);
+  text-decoration: none;
+  height: 3rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg);
+  background-color: var(--bg);
+  font-size: 1rem;
+  font-weight: 500;
+
+  &:hover {
+    background-color: var(--main);
+    color: var(--fg-main);
+  }
+}
+
+.error {
+  flex: 1;
+  font-style: italic;
+  text-align: center;
+}
