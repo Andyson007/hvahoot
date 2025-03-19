@@ -2,7 +2,7 @@
 extern crate rocket;
 
 use std::{
-    fs,
+    env, fs,
     path::{Path, PathBuf},
 };
 
