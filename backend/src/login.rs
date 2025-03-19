@@ -20,8 +20,9 @@ pub struct Login {
     password: String,
 }
 
-struct User {
-    username: String,
+pub struct User {
+    pub username: String,
+    pub id: i32,
 }
 
 #[rocket::async_trait]
@@ -45,7 +46,7 @@ impl<'r> FromRequest<'r> for User {
         };
 
         let Ok(record) = sqlx::query!(
-            r#"SELECT username
+            r#"SELECT username, id
         FROM tokens
             LEFT JOIN clients
                 ON clients.id = tokens.client
@@ -57,8 +58,7 @@ impl<'r> FromRequest<'r> for User {
         else {
             return Outcome::Error((Status::Unauthorized, ()));
         };
-        let username = record.username;
-        Outcome::Success(User { username })
+        Outcome::Success(User { username: record.username, id: record.id })
     }
 }
 

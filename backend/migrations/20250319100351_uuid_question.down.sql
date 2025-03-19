@@ -1,0 +1,1 @@
+ALTER TABLE hvahoots DROP COLUMN uuid;
