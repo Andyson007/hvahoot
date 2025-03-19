@@ -1,19 +1,17 @@
-#[macro_use]
-extern crate rocket;
-
 use std::{
     env, fs,
     path::{Path, PathBuf},
 };
 
-use argon2::{Argon2, PasswordHash, PasswordVerifier};
+use argon2::{
+    Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
+    password_hash::{SaltString, rand_core::OsRng},
+};
 use rocket::{
     State,
-    fs::NamedFile,
     futures::TryFutureExt,
-    get,
     http::CookieJar,
-    post, routes,
+    post,
     serde::{Deserialize, json::Json},
 };
 use sqlx::{Acquire, Executor, PgPool};
@@ -89,5 +87,53 @@ pub async fn signup(
     cookies: &CookieJar<'_>,
     pool: &State<PgPool>,
 ) -> Result<(), ()> {
+    let signup = signup.0;
+    let salt = SaltString::generate(&mut OsRng);
+
+    let argon2 = Argon2::default();
+
+    let phc = argon2
+        .hash_password(signup.password.as_bytes(), &salt)
+        .map_err(|e| println!("{e}"))?
+        .to_string();
+
+    let id: i32 = sqlx::query!(
+        "INSERT INTO clients (username, phc) VALUES ($1, $2) RETURNING id",
+        signup.username,
+        phc.to_string()
+    )
+    .fetch_one(
+        pool.acquire()
+            .await
+            .map_err(|e| {
+                println!("{e}");
+            })?
+            .acquire()
+            .await
+            .map_err(|e| println!("{e}"))?,
+    )
+    .await
+    .map_err(|e| eprintln!("{e}"))?
+    .id;
+
+    let token = Uuid::new_v4();
+    sqlx::query!(
+        "INSERT INTO tokens (token, client) VALUES ($1, $2)",
+        &token.to_string(),
+        id
+    )
+    .execute(
+        pool.acquire()
+            .await
+            .map_err(|e| {
+                println!("{e}");
+            })?
+            .acquire()
+            .await
+            .map_err(|e| println!("{e}"))?,
+    )
+    .await
+    .map_err(|e| println!("{e}"))?;
+    cookies.add(("token", token.to_string()));
     Ok(())
 }
