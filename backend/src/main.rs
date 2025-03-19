@@ -1,9 +1,15 @@
 #[macro_use]
 extern crate rocket;
 
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
+
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use rocket::{
     State,
+    fs::NamedFile,
     futures::TryFutureExt,
     get,
     http::CookieJar,
@@ -28,9 +34,14 @@ async fn main() -> Result<(), rocket::Error> {
     Ok(())
 }
 
-#[get("/")]
-fn index() -> &'static str {
-    "nk"
+#[get("/<path..>")]
+async fn index(path: PathBuf) -> Option<NamedFile> {
+    let path = Path::new("../frontend/build/").join(path);
+    if fs::metadata(&path).ok()?.is_dir() {
+        NamedFile::open(path.join("index.html")).await.ok()
+    } else {
+        NamedFile::open(path).await.ok()
+    }
 }
 
 #[derive(Deserialize)]
