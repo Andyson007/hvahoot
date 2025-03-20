@@ -24,7 +24,7 @@
   async function createHvahoot () {
     const resp = await fetch('/api/create', {
       method: 'POST',
-      body: JSON.stringify({ name, id, questions }),
+      body: JSON.stringify({ name, uuid: id, questions }),
       headers: {
         'Content-Type': 'application/json'
       }

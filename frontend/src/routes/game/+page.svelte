@@ -9,8 +9,9 @@
   let error: string = $state('');
 
   let points = 0;
+  let newusername: string = $state('');
   let username: string = $state('');
-  
+
   let currentquestion: { question: string, answers: string[] } | null = $state(null);
 
   let ws: WebSocket;
@@ -50,24 +51,28 @@
     ws.send(JSON.stringify({ type: 'answer', answer }));
   }
 
-  function setUsername () {
-    if(!ws) throw new Error('Unreachable code');
+  function setUsername (ev: SubmitEvent) {
+    ev.preventDefault();
+    if (ws.readyState != ws.OPEN) return;
 
-    ws.send(JSON.stringify({ type: 'username', username }));
+    ws.send(JSON.stringify({ type: 'username', username: newusername }));
+    username = newusername;
   }
 </script>
 
 <div class="page">
   <header>
     <span class="points">{points}</span>
-    <span>{username}</span>
+    {#if username}
+      <span class="username">{username}</span>
+    {/if}
   </header>
   <Errormessage error={error} />
   <main>
     {#if currentstate == 'USERNAME'}
       <div class="outerusername">
         <form class="usernameform" onsubmit={setUsername}>
-          <input type="text" placeholder="Brukernavn" bind:value={username}>
+          <input type="text" placeholder="Brukernavn" bind:value={newusername}>
           <input type="submit" value="Fortsett">
         </form> 
       </div>
@@ -96,6 +101,16 @@
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: space-between;
+  }
+  .username {
+    background-color: #efefef;
+    height: 3rem;
+    padding: .5rem;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .points {
     height: 3rem;
@@ -123,6 +138,16 @@
       box-sizing: border-box;
       font-size: .95rem;
       font: var(--font);
+      border: .125rem solid var(--main);
+      border-radius: 0;
+      background-color: #ffffff;
+
+      &[type="submit"] {
+        &:hover, &:active {
+          background-color: var(--main);
+          color: #ffffff;
+        }
+      }
     }
   }
   .outerusername {

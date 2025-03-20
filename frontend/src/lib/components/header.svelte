@@ -8,8 +8,8 @@
       <img src="/logo.png" alt="Hvahoot" draggable="false">
     </a>
     <nav>
-      <a class="button" href="/login">Registrér</a>
-      <a class="button" href="/signup">Logg inn</a>
+      <a class="button" href="/signup">Registrér</a>
+      <a class="button" href="/login">Logg inn</a>
     </nav>
   </header>
 </div>
