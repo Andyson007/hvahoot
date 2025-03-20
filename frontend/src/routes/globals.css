@@ -7,6 +7,7 @@
   --fg: #050f14;
   --bg: #ffffff;
   --fg-main: #ffffff;
+  --shadow: 0 0 2rem -.5rem var(--fg);
 }
 
 html, body {

@@ -16,6 +16,7 @@
   }
   main {
     max-width: 750px;
+    width: 100%;
     box-sizing: border-box;
     padding: .5rem;
     display: flex;
