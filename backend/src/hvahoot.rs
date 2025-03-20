@@ -1,6 +1,6 @@
 use rocket::{
     State, get, post,
-    serde::{Deserialize, json::Json},
+    serde::{Deserialize, Serialize, json::Json},
 };
 use sqlx::{Acquire, PgPool};
 use uuid::Uuid;
@@ -15,7 +15,7 @@ pub struct HvaHootData {
     uuid: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(crate = "rocket::serde")]
 pub struct Question {
     question: String,
@@ -91,4 +91,44 @@ pub async fn get_uuid(user: User, pool: &State<PgPool>) -> Option<String> {
     .ok()?;
 
     Some(uuid.to_string())
+}
+
+#[get("/quiz/<uuid>")]
+pub async fn quiz(uuid: String, user: User, pool: &State<PgPool>) -> Option<Json<Vec<Question>>> {
+    let mut connection_pool = pool
+        .acquire()
+        .await
+        .map_err(|e| {
+            println!("{e}");
+        })
+        .ok()?;
+    Some(Json(
+        sqlx::query!(
+            r#"
+SELECT answers, correct, question 
+    FROM hvahoots 
+        LEFT JOIN questions 
+            ON questions.hvahoot=hvahoots.id 
+WHERE hvahoots.uuid=$1
+    AND hvahoots.owner=$2"#,
+            uuid,
+            user.id
+        )
+        .fetch_all(
+            connection_pool
+                .acquire()
+                .await
+                .map_err(|e| println!("{e}"))
+                .ok()?,
+        )
+        .await
+        .ok()?
+        .into_iter()
+        .map(|x| Question {
+            answers: x.answers,
+            answer: x.correct,
+            question: x.question,
+        })
+        .collect(),
+    ))
 }

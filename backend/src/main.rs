@@ -6,7 +6,7 @@ use std::{
 };
 
 use backend::{
-    hvahoot::{create_hvahoot, get_uuid},
+    hvahoot::{create_hvahoot, get_uuid, quiz},
     login::{login, signup},
 };
 use rocket::{fs::NamedFile, get, routes};
@@ -25,7 +25,10 @@ async fn main() -> Result<(), rocket::Error> {
 
     rocket::build()
         .manage(pool)
-        .mount("/", routes![index, login, signup, get_uuid, create_hvahoot])
+        .mount(
+            "/",
+            routes![index, login, signup, get_uuid, create_hvahoot, quiz],
+        )
         .launch()
         .await?;
     Ok(())
