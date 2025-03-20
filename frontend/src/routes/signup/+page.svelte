@@ -24,40 +24,40 @@ async function login (ev: SubmitEvent) {
 </script>
 
 <main>
-<form onsubmit={login}>
-  <Errormessage error={error} />
-  <input type="text" bind:value={username}>
-  <input type="password" bind:value={password}>
-  <input class="button" type="submit" value="Registrér">
-</form>
+  <form onsubmit={login}>
+    <Errormessage error={error} />
+    <input type="text" bind:value={username}>
+    <input type="password" bind:value={password}>
+    <input class="button" type="submit" value="Registrér">
+  </form>
 </main>
 
 <style>
 
 form {
-display: flex;
-flex-direction: column;
-gap: .5rem;
-width: 14rem;
-padding: .5rem;
-box-shadow: 0 0 2rem -.5rem var(--fg);
-border-radius: .25rem;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  width: 14rem;
+  padding: .5rem;
+  box-shadow: var(--shadow);
+  border-radius: .25rem;
 }
 
 input {
-height: 3rem;
-border: .125rem solid var(--main);
-padding: .5rem;
-margin: 0;
-font-size: 1rem;
-box-sizing: border-box;
+  height: 3rem;
+  border: .125rem solid var(--main);
+  padding: .5rem;
+  margin: 0;
+  font-size: 1rem;
+  box-sizing: border-box;
 }
 
 main {
-height: 100%;
-display: flex;
-align-items: center;
-justify-content: center;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 </style>

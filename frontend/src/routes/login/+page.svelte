@@ -40,7 +40,7 @@ form {
   gap: .5rem;
   width: 14rem;
   padding: .5rem;
-  box-shadow: 0 0 2rem -.5rem var(--fg);
+  box-shadow: var(--shadow);
   border-radius: .25rem;
 }
 

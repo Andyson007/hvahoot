@@ -21,7 +21,7 @@
     display: flex;
     flex-direction: column;
     gap: .5rem;
-    box-shadow: 0 0 2rem -.5rem var(--fg);
+    box-shadow: var(--shadow);
     padding: .5rem;
     border-radius: .25rem;
     min-width: 14rem;
