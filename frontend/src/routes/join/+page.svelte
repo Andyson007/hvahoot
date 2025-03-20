@@ -1,13 +1,7 @@
-<script lang="ts">
-
-  let code: string = $state('');
-
-</script>
-
 <div class="center">
-  <form class="join">
+  <form class="join" method="GET" action="/game">
     <h2>Skriv inn kode</h2>
-    <input type="text" bind:value={code}>
+    <input type="text" name="id">
     <input class="button" type="submit" value="Bli med!">
   </form>
 </div>

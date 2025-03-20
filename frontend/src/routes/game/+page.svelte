@@ -1,0 +1,164 @@
+<script lang="ts">
+  import { page } from "$app/state";
+  import Errormessage from "$lib/components/errormessage.svelte";
+  import { onMount } from "svelte";
+
+  type GameState = 'QUESTION' | 'QWAITING' | 'QRESULT' | 'USERNAME';
+  let currentstate: GameState = $state('USERNAME');
+
+  let error: string = $state('');
+
+  let points = 0;
+  let username: string = $state('');
+  
+  let currentquestion: { question: string, answers: string[] } | null = $state(null);
+
+  let ws: WebSocket;
+
+  onMount(() => {
+    let quizid = page.url.searchParams.get('id');
+    if (!quizid) window.location.href = '/join';
+    
+    ws = new WebSocket('/play/' + quizid);
+    
+    ws.addEventListener('close', () => {
+      // window.location.href = '/join';
+    });
+
+    ws.addEventListener('message', ev => {
+      const rawcontent = ev.data;
+      let content: { type: string } & { [key: string]: any };
+
+      try {
+        content = JSON.parse(rawcontent);
+      } catch {
+        error = 'Could not parse content';
+        return;
+      }
+      
+      switch (content.type) {
+        case 'question':
+          currentquestion = { question: content.question, answers: content.answers }
+          currentstate = 'QUESTION';
+      }
+    });
+  });
+
+  function submitAnswer (answer: number) {
+    if(!ws) throw new Error('Unreachable code');
+
+    ws.send(JSON.stringify({ type: 'answer', answer }));
+  }
+
+  function setUsername () {
+    if(!ws) throw new Error('Unreachable code');
+
+    ws.send(JSON.stringify({ type: 'username', username }));
+  }
+</script>
+
+<div class="page">
+  <header>
+    <span class="points">{points}</span>
+    <span>{username}</span>
+  </header>
+  <Errormessage error={error} />
+  <main>
+    {#if currentstate == 'USERNAME'}
+      <div class="outerusername">
+        <form class="usernameform" onsubmit={setUsername}>
+          <input type="text" placeholder="Brukernavn" bind:value={username}>
+          <input type="submit" value="Fortsett">
+        </form> 
+      </div>
+    {:else if currentstate == 'QUESTION'}
+      {#if !currentquestion}
+        <span>Loading...</span>
+      {:else}
+        <div class="outerq">
+          <h2>{currentquestion.question}</h2>
+          <div class="answers">
+            {#each currentquestion.answers as answer, index}
+              <button class="answer" onclick={() => submitAnswer(index)}>
+                {answer}
+              </button>
+            {/each}
+          </div>
+        </div>
+      {/if}
+    {/if}
+  </main>
+</div>
+
+<style>
+  header {
+    padding: 1rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+  .points {
+    height: 3rem;
+    min-width: 4rem;
+    padding: .5rem;
+    box-sizing: border-box;
+    background-color: #efefef;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .usernameform {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    padding: .5rem;
+    background-color: #efefef;
+    width: 20rem;
+    max-width: 100%;
+
+    &>input {
+      height: 3rem;
+      padding: .5rem;
+      margin: 0;
+      box-sizing: border-box;
+      font-size: .95rem;
+      font: var(--font);
+    }
+  }
+  .outerusername {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .outerq {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: .5rem;
+    gap: .5rem;
+  }
+  .answers {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: .5rem;
+    & > button {
+      border: none;
+      border-radius: .25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+  .page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+</style>
