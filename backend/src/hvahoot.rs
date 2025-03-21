@@ -97,7 +97,49 @@ pub async fn get_uuid(user: User, pool: &State<PgPool>) -> Option<String> {
 
 #[get("/quiz/<uuid>")]
 pub async fn quiz(uuid: &str, user: User, pool: &State<PgPool>) -> Option<Json<Vec<Question>>> {
-    get_questions(pool, &user, &uuid).await.map(Json)
+    get_questions(pool, &user, uuid).await.map(Json)
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct Short {
+    name: String,
+    uuid: String,
+}
+
+#[get("/quizzes")]
+pub async fn quizzes(user: User, pool: &State<PgPool>) -> Option<Json<Vec<Short>>> {
+    let mut connection_pool = pool
+        .acquire()
+        .await
+        .map_err(|e| {
+            println!("{e}");
+        })
+        .ok()?;
+    let results = sqlx::query!(
+        r#"
+    SELECT name, uuid
+        FROM hvahoots 
+    WHERE hvahoots.owner=$1"#,
+        user.id
+    )
+    .fetch_all(
+        connection_pool
+            .acquire()
+            .await
+            .map_err(|e| println!("{e}"))
+            .ok()?,
+    )
+    .await
+    .map_err(|x| println!("{x}"))
+    .ok()?
+    .into_iter()
+    .map(|x| Short {
+        name: x.name,
+        uuid: x.uuid,
+    })
+    .collect();
+    Some(Json(results))
 }
 
 pub async fn get_questions(pool: &PgPool, user: &User, uuid: &str) -> Option<Vec<Question>> {

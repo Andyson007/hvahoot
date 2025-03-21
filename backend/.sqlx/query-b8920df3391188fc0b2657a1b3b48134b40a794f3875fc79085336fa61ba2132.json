@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT username, id\n        FROM tokens\n            LEFT JOIN clients\n                ON clients.id = tokens.client\n        WHERE token=$1 AND expires>STATEMENT_TIMESTAMP()",
+  "query": "SELECT username, id\n        FROM tokens\n            INNER JOIN clients\n                ON clients.id = tokens.client\n        WHERE token=$1 AND expires>STATEMENT_TIMESTAMP()",
   "describe": {
     "columns": [
       {
@@ -24,5 +24,5 @@
       false
     ]
   },
-  "hash": "8dbc53b2e04959b97301da339083039b57d231f916fcf9b3d17dda603782c575"
+  "hash": "b8920df3391188fc0b2657a1b3b48134b40a794f3875fc79085336fa61ba2132"
 }
