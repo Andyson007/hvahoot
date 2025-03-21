@@ -39,13 +39,17 @@ pub async fn play(
         .await
         .get_mut(&game_id)
         .map(|x| x.switch_game.resubscribe())?;
+    let client_id = games.write().await.get_mut(&game_id).map(|x| {
+        x.counter += 1;
+        x.counter
+    })?;
     Some(ws.channel(move |mut stream| {
         Box::pin(async move {
             loop {
                 select! {
                     message = stream.next() => {
                         let Some(message) = message.transpose()? else {
-                        sender.send(Protocol::Disconnected).unwrap();
+                        sender.send(Protocol::Disconnected{ client_id }).unwrap();
                             break;
                         };
                         let raw = message.to_text()?;
@@ -60,13 +64,13 @@ pub async fn play(
                                 let Some(Value::String(username)) = obj.get("username") else {
                                     return Ok(());
                                 };
+                                sender.send(Protocol::Connected{client_id, username: username.clone()}).unwrap();
                             }
                             Value::String(x) if x == "answer" => {
                                 todo!()
                             }
                             _ => return Ok(()),
                         }
-                        sender.send(Protocol::Connected).unwrap();
                     },
                     update_question = receiver.recv() => {
                         let Ok(question_num) = update_question else {
@@ -92,10 +96,10 @@ pub async fn play(
     }))
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub enum Protocol {
-    Connected,
-    Disconnected,
+    Connected { client_id: usize, username: String },
+    Disconnected { client_id: usize },
     Answer(u32),
 }
 
@@ -105,6 +109,7 @@ pub struct Game {
     questions: Vec<Question>,
     sender: Sender<Protocol>,
     switch_game: Receiver<usize>,
+    counter: usize,
 }
 
 #[get("/play/host/<uuid>")]
@@ -126,6 +131,7 @@ pub async fn host<'a>(
             curr: 0,
             questions: get_questions(pool, &user, &uuid).await?,
             quiz_uuid: uuid,
+            counter: 0,
         },
     );
     Some(ws.channel(move |mut stream| {
@@ -180,8 +186,11 @@ pub async fn host<'a>(
 
 async fn handle_message(message: Protocol) {
     match message {
-        Protocol::Connected => eprintln!("Connected"),
-        Protocol::Disconnected => eprintln!("Disconnected"),
+        Protocol::Connected {
+            client_id,
+            username,
+        } => eprintln!("Connected"),
+        Protocol::Disconnected { client_id } => eprintln!("Disconnected"),
         Protocol::Answer(x) => eprintln!("answered {x}"),
     }
 }
