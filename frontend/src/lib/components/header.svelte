@@ -1,5 +1,12 @@
-<script lang="typescript">
+<script lang="ts">
+  import { isLoggedIn } from '$lib/token';
+  import { onMount } from 'svelte';
 
+  let loggedin: boolean | undefined = $state(undefined);
+
+  onMount(() => {
+    loggedin = isLoggedIn();
+  });
 </script>
 
 <div class="headerpadding">
@@ -8,8 +15,12 @@
       <img src="/logo.png" alt="Hvahoot" draggable="false">
     </a>
     <nav>
-      <a class="button" href="/signup">Registrér</a>
-      <a class="button" href="/login">Logg inn</a>
+      {#if loggedin}
+        <a href="/create" class="button">Create Hvahoot</a>
+      {:else}
+        <a class="button" href="/signup">Registrér</a>
+        <a class="button" href="/login">Logg inn</a>
+      {/if}
     </nav>
   </header>
 </div>
