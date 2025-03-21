@@ -12,7 +12,7 @@
     ws = new WebSocket('/play/host/'+uuid);
 
     ws.addEventListener('message', ev => {
-      const { data } = ev.data;
+      const { data } = ev;      
       const json = JSON.parse(data);
       
       switch(json.type) {
