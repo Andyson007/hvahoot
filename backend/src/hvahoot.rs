@@ -20,9 +20,9 @@ pub struct HvaHootData {
 #[derive(Deserialize, Serialize)]
 #[serde(crate = "rocket::serde")]
 pub struct Question {
-    question: String,
-    answer: i32,
-    answers: Vec<String>,
+    pub question: String,
+    pub answer: i32,
+    pub answers: Vec<String>,
 }
 
 #[post("/api/create", data = "<hvahoot>")]

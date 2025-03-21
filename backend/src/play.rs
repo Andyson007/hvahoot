@@ -45,6 +45,7 @@ pub async fn play(
                 select! {
                     message = stream.next() => {
                         let Some(message) = message.transpose()? else {
+                        sender.send(Protocol::Disconnected).unwrap();
                             break;
                         };
                         let raw = message.to_text()?;
@@ -71,11 +72,17 @@ pub async fn play(
                         let Ok(question_num) = update_question else {
                             return Ok(())
                         };
+                        let binding = games.read().await;
+                        let q = &binding.get(&game_id).unwrap().questions[question_num];
                         let _ = stream
                             .send(ws::Message::Text(
-                                serde_json::to_string(&games.read().await.get(&game_id).unwrap().questions[question_num]).unwrap(),
-                            ))
-                            .await;
+                                serde_json::to_string(&serde_json::json!({
+                                    "type": "question",
+                                    "question": q.question,
+                                    "answers": q.answers,
+                                }))
+                                .unwrap()))
+                                .await;
                     }
                 }
             }
