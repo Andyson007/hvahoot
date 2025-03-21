@@ -5,7 +5,6 @@ use rocket::{
     State,
     futures::{SinkExt, StreamExt},
     get,
-    serde::Serialize,
     tokio::{
         select,
         sync::{
@@ -119,6 +118,7 @@ pub async fn host<'a>(
     );
     Some(ws.channel(move |mut stream| {
         Box::pin(async move {
+            let _ = stream.send(ws::Message::Text(id.to_string())).await;
             loop {
                 select! {
                     message = stream.next() => {
