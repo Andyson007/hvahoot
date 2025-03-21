@@ -68,9 +68,14 @@ pub async fn play(
                         sender.send(Protocol::Connected).unwrap();
                     },
                     update_question = receiver.recv() => {
-                        let binding = games.read().await;
-                        let game = binding.get(&game_id).unwrap();
-                        let _ = stream.send(ws::Message::Text(serde_json::to_string(&game.questions[game.curr]).unwrap())).await;
+                        let Ok(question_num) = update_question else {
+                            return Ok(())
+                        };
+                        let _ = stream
+                            .send(ws::Message::Text(
+                                serde_json::to_string(&games.read().await.get(&game_id).unwrap().questions[question_num]).unwrap(),
+                            ))
+                            .await;
                     }
                 }
             }
@@ -92,7 +97,7 @@ pub struct Game {
     curr: usize,
     questions: Vec<Question>,
     sender: Sender<Protocol>,
-    switch_game: Receiver<()>,
+    switch_game: Receiver<usize>,
 }
 
 #[get("/play/host/<uuid>")]
@@ -143,12 +148,13 @@ pub async fn host<'a>(
 
                         match r#type {
                             Value::String(x) if x == "next" => {
-                                games.write().await.get_mut(&id).unwrap().curr += 1;
-                                let _ = curr_sender.send(());
+                                let mut binding = games.write().await;
+                                let x = binding.get_mut(&id).unwrap();
+                                let _ = curr_sender.send(x.curr);
+                                x.curr += 1;
                             }
                             _ => return Ok(()),
                         }
-                        println!("{:?}", message)
                     },
                     message = recv.recv() => {
                         if let Ok(message) = message {
