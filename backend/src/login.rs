@@ -5,10 +5,11 @@ use argon2::{
 use rocket::{
     State,
     futures::TryFutureExt,
-    http::{CookieJar, Status},
+    http::{Cookie, CookieJar, Status},
     post,
     request::{FromRequest, Outcome, Request},
     serde::{Deserialize, json::Json},
+    time::{Duration, OffsetDateTime, format_description::modifier::OffsetHour},
 };
 use sqlx::{Acquire, PgPool};
 use uuid::Uuid;
@@ -119,7 +120,10 @@ pub async fn login(
         )
         .await
         .map_err(|e| println!("{e}"))?;
-        cookies.add(("token", token.to_string()));
+        cookies.add(
+            Cookie::build(("token", token.to_string()))
+                .expires(OffsetDateTime::now_utc() + Duration::hours(1)),
+        );
         Ok(())
     } else {
         Err(())
