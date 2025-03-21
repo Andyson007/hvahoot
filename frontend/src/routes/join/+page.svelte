@@ -6,6 +6,10 @@
   </form>
 </div>
 
+<svelte:head>
+  <title>Hvahoot - Bli med</title>
+</svelte:head>
+
 <style>
   .center {
     justify-content: center;

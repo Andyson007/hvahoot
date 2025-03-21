@@ -60,6 +60,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Hvahoot - Quiz</title>
+</svelte:head>
+
 <div class="page">
   <header>
     <span class="points">{points}</span>

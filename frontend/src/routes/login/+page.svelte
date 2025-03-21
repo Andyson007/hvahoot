@@ -23,6 +23,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Hvahoot - Logg inn</title>
+</svelte:head>
+
 <main>
   <form onsubmit={login}>
     <Errormessage error={error} />

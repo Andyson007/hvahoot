@@ -4,6 +4,10 @@
 
 </script>
 
+<svelte:head>
+  <title>Hvahoot - Quiz som du aldri har sett det</title>
+</svelte:head>
+
 <Header />
 <Centermain>
   <h1>Hvahoot - Quiz som du aldri har sett det</h1>

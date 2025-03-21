@@ -66,6 +66,10 @@
   });
 </script>
 
+<svelte:head>
+  <title>Hvahoot - Lag en Hvahoot</title>
+</svelte:head>
+
 <Header/>
 <Centermain>
   <Errormessage error={error}/>

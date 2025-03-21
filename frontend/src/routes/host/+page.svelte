@@ -18,4 +18,8 @@
   }
 </script>
 
+<svelte:head>
+  <title>Hvahoot - Arrangér spill</title>
+</svelte:head>
+
 <button onclick={nextQ}>Next question</button>
