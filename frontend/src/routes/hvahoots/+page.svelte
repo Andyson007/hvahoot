@@ -4,7 +4,7 @@
   let hvahoots: { name: string, uuid: string }[] | undefined = $state();
 
   onMount(async () => {
-    const resp = await fetch('/api/hvahoots', {
+    const resp = await fetch('/api/quizzes', {
       method: 'GET',
     });
     
