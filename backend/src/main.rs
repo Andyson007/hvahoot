@@ -8,9 +8,9 @@ use std::{
 };
 
 use backend::{
-    hvahoot::{create_hvahoot, get_uuid, quiz},
+    hvahoot::{create_hvahoot, get_uuid, quiz, quizzes},
     login::{login, signup},
-    play::{Game, host, play},
+    play::{host, play, Game},
 };
 use rocket::{fs::NamedFile, get, routes, tokio::sync::RwLock};
 use sqlx::PgPool;
@@ -39,7 +39,8 @@ async fn main() -> Result<(), rocket::Error> {
                 create_hvahoot,
                 quiz,
                 play,
-                host
+                host,
+                quizzes
             ],
         )
         .launch()
