@@ -1,0 +1,1 @@
+ALTER TABLE hvahoots ALTER COLUMN uuid TYPE CHAR(36);

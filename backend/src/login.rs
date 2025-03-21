@@ -48,17 +48,24 @@ impl<'r> FromRequest<'r> for User {
         let Ok(record) = sqlx::query!(
             r#"SELECT username, id
         FROM tokens
-            LEFT JOIN clients
+            INNER JOIN clients
                 ON clients.id = tokens.client
         WHERE token=$1 AND expires>STATEMENT_TIMESTAMP()"#,
-            token.to_string()
+            token.value()
         )
-        .fetch_one(connection)
+        .fetch_optional(connection)
         .await
         else {
-            return Outcome::Error((Status::Unauthorized, ()));
+            return Outcome::Error((Status::InternalServerError, ()));
         };
-        Outcome::Success(User { username: record.username, id: record.id })
+        if let Some(record) = record {
+            Outcome::Success(User {
+                username: record.username,
+                id: record.id,
+            })
+        } else {
+            return Outcome::Error((Status::Unauthorized, ()));
+        }
     }
 }
 

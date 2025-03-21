@@ -1,5 +1,7 @@
 use rocket::{
-    State, get, post,
+    State,
+    futures::FutureExt,
+    get, post,
     serde::{Deserialize, Serialize, json::Json},
 };
 use sqlx::{Acquire, PgPool};
@@ -94,7 +96,11 @@ pub async fn get_uuid(user: User, pool: &State<PgPool>) -> Option<String> {
 }
 
 #[get("/quiz/<uuid>")]
-pub async fn quiz(uuid: String, user: User, pool: &State<PgPool>) -> Option<Json<Vec<Question>>> {
+pub async fn quiz(uuid: &str, user: User, pool: &State<PgPool>) -> Option<Json<Vec<Question>>> {
+    get_questions(pool, &user, &uuid).await.map(Json)
+}
+
+pub async fn get_questions(pool: &PgPool, user: &User, uuid: &str) -> Option<Vec<Question>> {
     let mut connection_pool = pool
         .acquire()
         .await
@@ -102,15 +108,15 @@ pub async fn quiz(uuid: String, user: User, pool: &State<PgPool>) -> Option<Json
             println!("{e}");
         })
         .ok()?;
-    Some(Json(
+    Some(
         sqlx::query!(
             r#"
-SELECT answers, correct, question 
-    FROM hvahoots 
-        LEFT JOIN questions 
-            ON questions.hvahoot=hvahoots.id 
-WHERE hvahoots.uuid=$1
-    AND hvahoots.owner=$2"#,
+    SELECT answers, correct, question 
+        FROM hvahoots 
+            LEFT JOIN questions 
+                ON questions.hvahoot=hvahoots.id 
+    WHERE hvahoots.uuid=$1
+        AND hvahoots.owner=$2"#,
             uuid,
             user.id
         )
@@ -130,5 +136,5 @@ WHERE hvahoots.uuid=$1
             question: x.question,
         })
         .collect(),
-    ))
+    )
 }

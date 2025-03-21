@@ -1,15 +1,18 @@
 extern crate rocket;
 
 use std::{
+    collections::HashMap,
     env, fs,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use backend::{
     hvahoot::{create_hvahoot, get_uuid, quiz},
     login::{login, signup},
+    play::{Game, host, play},
 };
-use rocket::{fs::NamedFile, get, routes};
+use rocket::{fs::NamedFile, get, routes, tokio::sync::RwLock};
 use sqlx::PgPool;
 
 #[rocket::main]
@@ -25,9 +28,19 @@ async fn main() -> Result<(), rocket::Error> {
 
     rocket::build()
         .manage(pool)
+        .manage(Arc::new(RwLock::new(HashMap::<u32, Game>::new())))
         .mount(
             "/",
-            routes![index, login, signup, get_uuid, create_hvahoot, quiz],
+            routes![
+                index,
+                login,
+                signup,
+                get_uuid,
+                create_hvahoot,
+                quiz,
+                play,
+                host
+            ],
         )
         .launch()
         .await?;
