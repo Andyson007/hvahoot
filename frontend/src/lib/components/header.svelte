@@ -16,7 +16,7 @@
     </a>
     <nav>
       {#if loggedin}
-        <a href="/create" class="button">Create Hvahoot</a>
+        <a href="/hvahoots" class="button">My Hvahoots</a>
       {:else}
         <a class="button" href="/signup">Registrér</a>
         <a class="button" href="/login">Logg inn</a>
