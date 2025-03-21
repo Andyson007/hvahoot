@@ -30,17 +30,24 @@
       const rawcontent = ev.data;
       let content: { type: string } & { [key: string]: any };
 
+      console.log(rawcontent);
+
       try {
         content = JSON.parse(rawcontent);
       } catch {
         error = 'Could not parse content';
         return;
       }
+
+      console.log(content);
+      
       
       switch (content.type) {
         case 'question':
           currentquestion = { question: content.question, answers: content.answers }
           currentstate = 'QUESTION';
+          console.log('sadf');
+          break;
       }
     });
   });
