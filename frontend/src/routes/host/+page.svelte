@@ -11,6 +11,8 @@
 
     ws = new WebSocket('/play/host/'+uuid);
 
+    ws.addEventListener('open', () => console.log('connected'));
+
     ws.addEventListener('message', ev => {
       const { data } = ev;      
       const json = JSON.parse(data);
