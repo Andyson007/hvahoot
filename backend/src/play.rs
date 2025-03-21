@@ -118,7 +118,15 @@ pub async fn host<'a>(
     );
     Some(ws.channel(move |mut stream| {
         Box::pin(async move {
-            let _ = stream.send(ws::Message::Text(id.to_string())).await;
+            let _ = stream
+                .send(ws::Message::Text(
+                    serde_json::to_string(&serde_json::json!({
+                        "type": "code",
+                        "code": id,
+                    }))
+                    .unwrap(),
+                ))
+                .await;
             loop {
                 select! {
                     message = stream.next() => {
