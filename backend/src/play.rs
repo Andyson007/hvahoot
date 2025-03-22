@@ -9,7 +9,8 @@ use rocket::{
         select,
         sync::{
             RwLock,
-            broadcast::{self, Receiver, Sender},
+            broadcast::{self, Sender},
+            watch,
         },
     },
 };
@@ -38,14 +39,18 @@ pub async fn play(
         .write()
         .await
         .get_mut(&game_id)
-        .map(|x| x.switch_game.resubscribe())?;
+        .map(|x| x.switch_game.clone())?;
+    let client_id = games.write().await.get_mut(&game_id).map(|x| {
+        x.counter += 1;
+        x.counter
+    })?;
     Some(ws.channel(move |mut stream| {
         Box::pin(async move {
             loop {
                 select! {
                     message = stream.next() => {
                         let Some(message) = message.transpose()? else {
-                        sender.send(Protocol::Disconnected).unwrap();
+                        sender.send(Protocol::Disconnected{ client_id }).unwrap();
                             break;
                         };
                         let raw = message.to_text()?;
@@ -60,18 +65,19 @@ pub async fn play(
                                 let Some(Value::String(username)) = obj.get("username") else {
                                     return Ok(());
                                 };
+                                sender.send(Protocol::Connected{client_id, username: username.clone()}).unwrap();
                             }
                             Value::String(x) if x == "answer" => {
                                 todo!()
                             }
                             _ => return Ok(()),
                         }
-                        sender.send(Protocol::Connected).unwrap();
                     },
-                    update_question = receiver.recv() => {
-                        let Ok(question_num) = update_question else {
+                    update_question = receiver.changed() => {
+                        if update_question.is_err()  {
                             return Ok(())
                         };
+                        let question_num = *receiver.borrow();
                         let binding = games.read().await;
                         let q = &binding.get(&game_id).unwrap().questions[question_num];
                         let _ = stream
@@ -92,11 +98,11 @@ pub async fn play(
     }))
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub enum Protocol {
-    Connected,
-    Disconnected,
-    Answer(u32),
+    Connected { client_id: usize, username: String },
+    Disconnected { client_id: usize },
+    Answer { client_id: usize, answer: u32 },
 }
 
 pub struct Game {
@@ -104,7 +110,8 @@ pub struct Game {
     curr: usize,
     questions: Vec<Question>,
     sender: Sender<Protocol>,
-    switch_game: Receiver<usize>,
+    switch_game: watch::Receiver<usize>,
+    counter: usize,
 }
 
 #[get("/play/host/<uuid>")]
@@ -116,7 +123,7 @@ pub async fn host<'a>(
     pool: &State<PgPool>,
 ) -> Option<ws::Channel<'a>> {
     let (sender, mut recv) = broadcast::channel(1);
-    let (curr_sender, curr_receiver) = broadcast::channel(1);
+    let (curr_sender, curr_receiver) = watch::channel(0);
     let id = OsRng::next_u32(&mut OsRng) & !2u32.pow(31);
     games.write().await.insert(
         id,
@@ -126,6 +133,7 @@ pub async fn host<'a>(
             curr: 0,
             questions: get_questions(pool, &user, &uuid).await?,
             quiz_uuid: uuid,
+            counter: 0,
         },
     );
     Some(ws.channel(move |mut stream| {
@@ -139,6 +147,8 @@ pub async fn host<'a>(
                     .unwrap(),
                 ))
                 .await;
+
+            let mut players = HashMap::new();
             loop {
                 select! {
                     message = stream.next() => {
@@ -164,10 +174,22 @@ pub async fn host<'a>(
                         }
                     },
                     message = recv.recv() => {
-                        if let Ok(message) = message {
-                            handle_message(message).await;
-                        } else {
+                        let Ok(message) = message else {
                             break;
+                        };
+                        match message {
+                            Protocol::Connected {
+                                client_id,
+                                username,
+                            } => {
+                                println!("{client_id} joined with {username}");
+                                players.insert(client_id, username);
+                            },
+                            Protocol::Disconnected { client_id } => {
+                                players.remove(&client_id);
+                                println!("{client_id} left");
+                            },
+                            Protocol::Answer{client_id, answer} => eprintln!("{client_id} answered {answer}"),
                         }
                     },
 
@@ -176,14 +198,6 @@ pub async fn host<'a>(
             Ok(())
         })
     }))
-}
-
-async fn handle_message(message: Protocol) {
-    match message {
-        Protocol::Connected => eprintln!("Connected"),
-        Protocol::Disconnected => eprintln!("Disconnected"),
-        Protocol::Answer(x) => eprintln!("answered {x}"),
-    }
 }
 
 #[get("/path")]
