@@ -1,10 +1,14 @@
 <script lang="ts">
   import { page } from "$app/state";
   import Errormessage from "$lib/components/errormessage.svelte";
+    import Loading from "$lib/components/loading.svelte";
   import { onMount } from "svelte";
 
   type GameState = 'QUESTION' | 'QWAITING' | 'QRESULT' | 'USERNAME' | 'LOBBY';
   let currentstate: GameState = $state('USERNAME');
+
+  const answerteases = ['Var du ikke litt VEL rask?', 'Tvi, tvi!', 'Bold move.', 'Du har all rett til å ta feil', 'Det svaret kan bli vanskelig å forsvare', 'La oss skje hva som skjer'];
+  let answerteasechoice: number = $state(0);
 
   let error: string = $state('');
 
@@ -51,6 +55,7 @@
 
     ws.send(JSON.stringify({ type: 'answer', answer }));
 
+    answerteasechoice = Math.floor(Math.random() * answerteases.length);
     currentstate = 'QWAITING';
   }
 
@@ -103,6 +108,13 @@
           </div>
         </div>
       {/if}
+    {:else if currentstate == 'QWAITING'}
+        <div class="outerqwaiting">
+          <div class="qwaiting">
+            <Loading />
+            <span>{answerteases[answerteasechoice]}</span>
+          </div>
+        </div>
     {/if}
   </main>
 </div>
@@ -189,7 +201,7 @@
       justify-content: center;
     }
   }
-  .outerlobby {
+  .outerlobby, .outerqwaiting  {
     flex: 1;
     display: flex;
     align-items: center;
@@ -198,6 +210,15 @@
     &>span {
       font-style: italic;
     }
+  }
+  .qwaiting {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    align-items: center;
+    width: 500px;
+    max-width: 100%;
+    padding: 1rem;
   }
   .page {
     display: flex;
