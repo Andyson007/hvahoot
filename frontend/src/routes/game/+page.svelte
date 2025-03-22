@@ -3,7 +3,7 @@
   import Errormessage from "$lib/components/errormessage.svelte";
   import { onMount } from "svelte";
 
-  type GameState = 'QUESTION' | 'QWAITING' | 'QRESULT' | 'USERNAME';
+  type GameState = 'QUESTION' | 'QWAITING' | 'QRESULT' | 'USERNAME' | 'LOBBY';
   let currentstate: GameState = $state('USERNAME');
 
   let error: string = $state('');
@@ -50,6 +50,8 @@
     if(!ws) throw new Error('Unreachable code');
 
     ws.send(JSON.stringify({ type: 'answer', answer }));
+
+    currentstate = 'QWAITING';
   }
 
   function setUsername (ev: SubmitEvent) {
@@ -58,6 +60,7 @@
 
     ws.send(JSON.stringify({ type: 'username', username: newusername }));
     username = newusername;
+    currentstate = 'LOBBY';
   }
 </script>
 
@@ -80,6 +83,10 @@
           <input type="text" placeholder="Brukernavn" bind:value={newusername}>
           <input type="submit" value="Fortsett">
         </form> 
+      </div>
+    {:else if currentstate == 'LOBBY'}
+      <div class="outerlobby">
+        <span>Waiting for the game to begin</span>
       </div>
     {:else if currentstate == 'QUESTION'}
       {#if !currentquestion}
@@ -173,12 +180,23 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: .5rem;
+    flex: 1;
     & > button {
       border: none;
       border-radius: .25rem;
       display: flex;
       align-items: center;
       justify-content: center;
+    }
+  }
+  .outerlobby {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &>span {
+      font-style: italic;
     }
   }
   .page {
