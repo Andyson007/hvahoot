@@ -9,7 +9,7 @@ use rocket::{
     post,
     request::{FromRequest, Outcome, Request},
     serde::{Deserialize, json::Json},
-    time::{Duration, OffsetDateTime, format_description::modifier::OffsetHour},
+    time::{Duration, OffsetDateTime},
 };
 use sqlx::{Acquire, PgPool};
 use uuid::Uuid;

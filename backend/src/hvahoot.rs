@@ -1,7 +1,5 @@
 use rocket::{
-    State,
-    futures::FutureExt,
-    get, post,
+    State, get, post,
     serde::{Deserialize, Serialize, json::Json},
 };
 use sqlx::{Acquire, PgPool};
