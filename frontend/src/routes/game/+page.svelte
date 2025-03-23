@@ -1,13 +1,14 @@
 <script lang="ts">
   import { page } from "$app/state";
   import Errormessage from "$lib/components/errormessage.svelte";
-    import Loading from "$lib/components/loading.svelte";
+  import Loading from "$lib/components/loading.svelte";
   import { onMount } from "svelte";
 
   type GameState = 'QUESTION' | 'QWAITING' | 'QRESULT' | 'USERNAME' | 'LOBBY';
   let currentstate: GameState = $state('USERNAME');
 
   const answerteases = ['Var du ikke litt VEL rask?', 'Tvi, tvi!', 'Bold move.', 'Du har all rett til å ta feil', 'Det svaret kan bli vanskelig å forsvare', 'La oss skje hva som skjer'];
+  const wrongteases = ['Håper du får det til etter hvert', 'Dette kan bli kjedelig i lengden', 'Er Hvahooten vanskelig, eller er det et deg-problem?', 'Slapp av, du får det sikkert til neste gang'];
   let answerteasechoice: number = $state(0);
 
   let error: string = $state('');
@@ -17,6 +18,7 @@
   let username: string = $state('');
 
   let currentquestion: { question: string, answers: string[] } | null = $state(null);
+  let currentresult: { correct: boolean, points: number } | null = $state(null);
 
   let ws: WebSocket;
 
@@ -40,11 +42,19 @@
         error = 'Could not parse content';
         return;
       }
+
+      currentquestion = null;
+      currentresult = null;
       
       switch (content.type) {
         case 'question':
           currentquestion = { question: content.question, answers: content.answers }
           currentstate = 'QUESTION';
+          break;
+        case 'qresult':
+          currentresult = { points: content.points, correct: content.correct }
+          points += currentresult.points;
+          currentstate = 'QRESULT';
           break;
       }
     });
@@ -109,12 +119,25 @@
         </div>
       {/if}
     {:else if currentstate == 'QWAITING'}
-        <div class="outerqwaiting">
-          <div class="qwaiting">
-            <Loading />
-            <span>{answerteases[answerteasechoice]}</span>
-          </div>
+      <div class="outerqwaiting">
+        <div class="qwaiting">
+          <Loading />
+          <span>{answerteases[answerteasechoice]}</span>
         </div>
+      </div>
+    {:else if currentstate == 'QRESULT'}
+      <div class="outerqresult">
+        <div class="qresult">
+          {#if !currentresult}
+            <Loading />
+          {:else}
+            <span class="points">{currentresult.points} points</span>
+            {#if !currentresult.correct}
+              <span>{wrongteases[Math.floor(Math.random() * wrongteases.length)]}</span>
+            {/if}
+          {/if}
+        </div>
+      </div>
     {/if}
   </main>
 </div>
