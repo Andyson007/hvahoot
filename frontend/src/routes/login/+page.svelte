@@ -1,10 +1,14 @@
 <script lang="ts">
+  import { page } from "$app/state";
   import Errormessage from "$lib/components/errormessage.svelte";
+  import { onMount } from "svelte";
 
   let username: string = $state('');
   let password: string = $state('');
 
   let error: string = $state('');
+
+  let redirect = $state('');
 
   async function login (ev: SubmitEvent) {
     ev.preventDefault();
@@ -20,8 +24,12 @@
     });
 
     if (!resp.ok) error = (await resp.json().catch(() => {return {message: 'An error occured while parsing the response'}})).message;
-    else window.location.href = ''
+    else window.location.href = redirect;
   }
+
+  onMount(() => {
+    redirect = page.url.searchParams.get('redirect') || '/';
+  });
 </script>
 
 <svelte:head>

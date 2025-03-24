@@ -1,26 +1,35 @@
 <script lang="ts">
+  import { page } from "$app/state";
   import Errormessage from "$lib/components/errormessage.svelte";
+  import { onMount } from "svelte";
 
-let username: string = $state('');
-let password: string = $state('');
+  let username: string = $state('');
+  let password: string = $state('');
 
-let error: string = $state('');
+  let error: string = $state('');
 
-async function login (ev: SubmitEvent) {
-  ev.preventDefault();
+  let redirect = $state('');
 
-  const resp = await fetch('/signup', {
-    method: 'POST',
-    body: JSON.stringify({
-      username, password
-    }),
-    headers: {
-      'Content-Type': 'application/json'
-    }
+  async function login (ev: SubmitEvent) {
+    ev.preventDefault();
+
+    const resp = await fetch('/signup', {
+      method: 'POST',
+      body: JSON.stringify({
+        username, password
+      }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!resp.ok) error = (await resp.json().catch(() => {return {message: 'An error occured while parsing the response'}})).message;
+    else window.location.href = redirect;
+  }
+
+  onMount(() => {
+    redirect = page.url.searchParams.get('redirect') || '/';
   });
-
-  if (!resp.ok) error = (await resp.json().catch(() => {return {message: 'An error occured while parsing the response'}})).message;
-}
 </script>
 
 <main>
