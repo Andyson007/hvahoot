@@ -103,9 +103,10 @@ pub async fn play(
 pub enum Protocol {
     Connected { client_id: usize, username: String },
     Disconnected { client_id: usize },
-    Answer { client_id: usize, answer: u32 },
+    Answer { client_id: usize, answer: i32 },
 }
 
+#[derive(Debug, Clone)]
 pub struct Game {
     quiz_uuid: String,
     curr: usize,
@@ -126,13 +127,15 @@ pub async fn host<'a>(
     let (sender, mut recv) = broadcast::channel(1);
     let (curr_sender, curr_receiver) = watch::channel(0);
     let id = OsRng::next_u32(&mut OsRng) & !2u32.pow(31);
+    let questions = get_data(pool, &user, &uuid).await?.questions;
+    let mut curr = 0;
     games.write().await.insert(
         id,
         Game {
             sender,
             switch_game: curr_receiver,
             curr: 0,
-            questions: get_data(pool, &user, &uuid).await?.questions,
+            questions: questions.clone(),
             quiz_uuid: uuid,
             counter: 0,
         },
@@ -149,9 +152,9 @@ pub async fn host<'a>(
                 ))
                 .await;
 
-            let mut players = HashMap::new();
+            let mut players = HashMap::<_, Player>::new();
             let mut answered = HashSet::new();
-            loop {
+            'game_loop: loop {
                 select! {
                     message = stream.next() => {
                         let Some(Ok(message)) = message else {
@@ -170,8 +173,17 @@ pub async fn host<'a>(
                                 let mut binding = games.write().await;
                                 let x = binding.get_mut(&id).unwrap();
                                 let _ = curr_sender.send(x.curr);
-                                x.curr += 1;
                                 answered.clear();
+                                stream.send_json(json!({
+                                    "type": "question",
+                                    "question": questions[x.curr].question,
+                                    "answers": questions[x.curr].answer,
+                                })).await;
+                                x.curr += 1;
+                                curr += 1;
+                                if curr == questions.len() {
+                                    break 'game_loop;
+                                }
                             }
                             _ => return Ok(()),
                         }
@@ -191,10 +203,10 @@ pub async fn host<'a>(
                                     "username": &username,
                                     "id": client_id
                                 })).await;
-                                players.insert(client_id, username);
+                                players.insert(client_id, Player { name: username, client_id, score: 0 });
                             },
                             Protocol::Disconnected { client_id } => {
-                                if let Some(old_name) = players.remove(&client_id) {
+                                if let Some(Player {name: old_name, client_id, ..}) = players.remove(&client_id) {
                                     stream.send_json(json!({
                                         "type": "disconnect",
                                         "username": old_name,
@@ -209,7 +221,11 @@ pub async fn host<'a>(
                                     "type": "answer",
                                     "id": client_id,
                                 })).await;
-                                answered.insert(client_id);
+                                if answered.insert(client_id) && answer == questions[curr].answer {
+                                    if let Some(player) = players.get_mut(&client_id) {
+                                        player.score += 1;
+                                    }
+                                };
                             }
                         };
                         if players.keys().copied().collect::<HashSet<_>>() == answered {
@@ -221,9 +237,21 @@ pub async fn host<'a>(
 
                 }
             }
+            stream.send_json(json!({
+                "type": "summary",
+                "scores": players,
+            })).await;
             Ok(())
         })
     }))
+}
+
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+struct Player {
+    name: String,
+    client_id: usize,
+    score: usize,
 }
 
 #[get("/path")]

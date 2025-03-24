@@ -15,7 +15,7 @@ pub struct HvaHootData {
     pub uuid: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(crate = "rocket::serde")]
 pub struct Question {
     pub question: String,
