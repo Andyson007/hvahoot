@@ -183,7 +183,7 @@ pub async fn host<'a>(
                                 stream.send_json(json!({
                                     "type": "question",
                                     "question": questions[x.curr].question,
-                                    "answers": questions[x.curr].answer,
+                                    "answers": questions[x.curr].answers,
                                 })).await;
                                 x.curr += 1;
                                 curr += 1;
