@@ -102,7 +102,7 @@ pub async fn play(
                                 next_correct = q.answer;
                                 let _ = stream.send_json(
                                     &json!({
-                                        "type": "answer",
+                                        "type": "question",
                                         "question": q.question,
                                         "answers": q.answers,
                                     })).await;
@@ -111,7 +111,7 @@ pub async fn play(
                                 let q = &binding.get(&game_id).unwrap().questions[question_num];
                                 let _ = stream.send_json(
                                     &json!({
-                                        "type": "question",
+                                        "type": "answer",
                                         "correct": answered == q.answer,
                                         "points": points,
                                     })).await;
