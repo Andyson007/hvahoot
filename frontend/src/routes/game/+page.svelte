@@ -7,7 +7,7 @@
   type GameState = 'QUESTION' | 'QWAITING' | 'QRESULT' | 'USERNAME' | 'LOBBY';
   let currentstate: GameState = $state('USERNAME');
 
-  const answerteases = ['Var du ikke litt VEL rask?', 'Tvi, tvi!', 'Bold move.', 'Du har all rett til å ta feil', 'Det svaret kan bli vanskelig å forsvare', 'La oss skje hva som skjer'];
+  const answerteases = ['Var du ikke litt VEL rask?', 'Tvi, tvi!', '**Bold move.**', 'Du har all rett til å ta feil', 'Det svaret kan bli vanskelig å forsvare', 'La oss se hva som skjer'];
   const wrongteases = ['Håper du får det til etter hvert', 'Dette kan bli kjedelig i lengden', 'Er Hvahooten vanskelig, eller er det et deg-problem?', 'Slapp av, du får det sikkert til neste gang'];
   let answerteasechoice: number = $state(0);
 
