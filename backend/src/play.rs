@@ -205,6 +205,9 @@ pub async fn host<'a>(
 
                         match r#type {
                             Value::String(x) if x == "next" => {
+                                if curr == questions.len() {
+                                    break 'game_loop;
+                                }
                                 let mut binding = games.write().await;
                                 let x = binding.get_mut(&id).unwrap();
                                 let _ = curr_sender.send(GameState::Question(x.curr));
@@ -216,9 +219,6 @@ pub async fn host<'a>(
                                 })).await;
                                 x.curr += 1;
                                 curr += 1;
-                                if curr > questions.len() {
-                                    break 'game_loop;
-                                }
                             }
                             _ => return Ok(()),
                         }
