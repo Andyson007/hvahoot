@@ -101,20 +101,20 @@ pub async fn play(
                                 let q = &binding.get(&game_id).unwrap().questions[question_num];
                                 next_correct = q.answer;
                                 let _ = stream.send_json(
-                                &json!({
-                                    "type": "answer",
-                                    "question": q.question,
-                                    "answers": q.answers,
-                                })).await;
+                                    &json!({
+                                        "type": "answer",
+                                        "question": q.question,
+                                        "answers": q.answers,
+                                    })).await;
                             }
                             GameState::ShowResult(question_num) => {
                                 let q = &binding.get(&game_id).unwrap().questions[question_num];
                                 let _ = stream.send_json(
-                                &json!({
-                                    "type": "question",
-                                    "correct": answered == q.answer,
-                                    "points": points,
-                                })).await;
+                                    &json!({
+                                        "type": "question",
+                                        "correct": answered == q.answer,
+                                        "points": points,
+                                    })).await;
                             }
                             GameState::Pending => unreachable!(),
                         }
@@ -266,17 +266,14 @@ pub async fn host<'a>(
                         if players.keys().copied().collect::<HashSet<_>>() == answered {
                             let _ = curr_sender.send(GameState::ShowResult(curr));
                             stream.send_json(json!({
-                                "type": "finished answers",
+                                "type": "summary",
+                                "scores": players,
                             })).await;
                         }
                     },
 
                 }
             }
-            stream.send_json(json!({
-                "type": "summary",
-                "scores": players,
-            })).await;
             Ok(())
         })
     }))
