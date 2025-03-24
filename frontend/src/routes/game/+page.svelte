@@ -13,7 +13,7 @@
 
   let error: string = $state('');
 
-  let points = 0;
+  let points = $state(0);
   let newusername: string = $state('');
   let username: string = $state('');
 

@@ -21,9 +21,14 @@
   <div class="hvahoots">
     {#if hvahoots}
       {#each hvahoots as hvahoot}
-        <a class="hvahoot button" href="/host?uuid={hvahoot.uuid}">
-          {hvahoot.name}
+      <div class="hvahoot">
+        <a class="button outername" href="/host?uuid={hvahoot.uuid}">
+          <span class="name">
+            {hvahoot.name}
+          </span>
         </a>
+        <a href="/create?id={hvahoot.uuid}" class="button">Edit</a>
+      </div>
       {/each}
     {:else}
       <span>Loading</span>
@@ -31,3 +36,26 @@
   </div>
   <a href="/create" class="button">Create Hvahoot</a>
 </Centermain>
+
+<style>
+  .outername {
+    overflow: hidden;
+  }
+  .name {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .hvahoot {
+    display: flex;
+    flex-direction: row;
+    gap: .5rem;
+    flex-grow: 0;
+  }
+  .hvahoots {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    flex-grow: 0;
+  }
+</style>
