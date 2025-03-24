@@ -7,12 +7,12 @@ use uuid::Uuid;
 
 use crate::login::User;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(crate = "rocket::serde")]
 pub struct HvaHootData {
-    name: String,
-    questions: Vec<Question>,
-    uuid: String,
+    pub name: String,
+    pub questions: Vec<Question>,
+    pub uuid: String,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -94,8 +94,8 @@ pub async fn get_uuid(user: User, pool: &State<PgPool>) -> Option<String> {
 }
 
 #[get("/quiz/<uuid>")]
-pub async fn quiz(uuid: &str, user: User, pool: &State<PgPool>) -> Option<Json<Vec<Question>>> {
-    get_questions(pool, &user, uuid).await.map(Json)
+pub async fn quiz(uuid: &str, user: User, pool: &State<PgPool>) -> Option<Json<HvaHootData>> {
+    get_data(pool, &user, uuid).await.map(Json)
 }
 
 #[derive(Deserialize, Serialize)]
@@ -140,7 +140,7 @@ pub async fn quizzes(user: User, pool: &State<PgPool>) -> Option<Json<Vec<Short>
     Some(Json(results))
 }
 
-pub async fn get_questions(pool: &PgPool, user: &User, uuid: &str) -> Option<Vec<Question>> {
+pub async fn get_data(pool: &PgPool, user: &User, uuid: &str) -> Option<HvaHootData> {
     let mut connection_pool = pool
         .acquire()
         .await
@@ -148,33 +148,51 @@ pub async fn get_questions(pool: &PgPool, user: &User, uuid: &str) -> Option<Vec
             println!("{e}");
         })
         .ok()?;
-    Some(
-        sqlx::query!(
-            r#"
-    SELECT answers, correct, question 
-        FROM hvahoots 
+    let questions = sqlx::query!(
+        r#"
+            SELECT answers, correct, question 
+            FROM hvahoots 
             LEFT JOIN questions 
-                ON questions.hvahoot=hvahoots.id 
-    WHERE hvahoots.uuid=$1
-        AND hvahoots.owner=$2"#,
-            uuid,
-            user.id
-        )
-        .fetch_all(
-            connection_pool
-                .acquire()
-                .await
-                .map_err(|e| println!("{e}"))
-                .ok()?,
-        )
-        .await
-        .ok()?
-        .into_iter()
-        .map(|x| Question {
-            answers: x.answers,
-            answer: x.correct,
-            question: x.question,
-        })
-        .collect(),
+            ON questions.hvahoot=hvahoots.id 
+            WHERE hvahoots.uuid=$1
+            AND hvahoots.owner=$2"#,
+        uuid,
+        user.id
     )
+    .fetch_all(
+        connection_pool
+            .acquire()
+            .await
+            .map_err(|e| println!("{e}"))
+            .ok()?,
+    )
+    .await
+    .ok()?
+    .into_iter()
+    .map(|x| Question {
+        answers: x.answers,
+        answer: x.correct,
+        question: x.question,
+    })
+    .collect();
+    let name = sqlx::query!(
+        "SELECT name FROM hvahoots WHERE hvahoots.uuid=$1 AND hvahoots.owner=$2 LIMIT 1",
+        uuid,
+        user.id
+    )
+    .fetch_one(
+        connection_pool
+            .acquire()
+            .await
+            .map_err(|e| println!("{e}"))
+            .ok()?,
+    )
+    .await
+    .ok()?
+    .name;
+    Some(HvaHootData {
+        name: name.unwrap_or("".to_string()),
+        questions,
+        uuid: uuid.to_owned(),
+    })
 }

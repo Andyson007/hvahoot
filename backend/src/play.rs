@@ -19,7 +19,7 @@ use serde_json::Value;
 use sqlx::PgPool;
 
 use crate::{
-    hvahoot::{Question, get_questions},
+    hvahoot::{Question, get_data},
     login::User,
 };
 
@@ -131,7 +131,7 @@ pub async fn host<'a>(
             sender,
             switch_game: curr_receiver,
             curr: 0,
-            questions: get_questions(pool, &user, &uuid).await?,
+            questions: get_data(pool, &user, &uuid).await?.questions,
             quiz_uuid: uuid,
             counter: 0,
         },
