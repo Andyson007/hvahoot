@@ -72,7 +72,7 @@ pub async fn play(
                                 sender.send(Protocol::Connected{client_id, username: username.clone()}).unwrap();
                             }
                             Value::String(x) if x == "answer" => {
-                                let Some(Value::Number(x)) = obj.get("username") else {
+                                let Some(Value::Number(x)) = obj.get("answer") else {
                                     return Ok(());
                                 };
                                 let Some(num) = x.as_i64() else {
