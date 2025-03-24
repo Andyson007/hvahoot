@@ -43,11 +43,14 @@ pub async fn play(
         .write()
         .await
         .get_mut(&game_id)
-        .map(|x| x.switch_game.clone())?;
+        .map(|x| x.game_state.clone())?;
     let client_id = games.write().await.get_mut(&game_id).map(|x| {
         x.counter += 1;
         x.counter
     })?;
+    let mut answered = 0;
+    let mut next_correct = 0;
+    let mut points = 0;
     Some(ws.channel(move |mut stream| {
         Box::pin(async move {
             loop {
@@ -78,7 +81,11 @@ pub async fn play(
                                 let Some(num) = x.as_i64() else {
                                     return Ok(());
                                 };
-                                let _ = sender.send(Protocol::Answer { client_id, answer: num as i32 });
+                                answered = num as i32;
+                                if answered == next_correct {
+                                    points += 1;
+                                }
+                                let _ = sender.send(Protocol::Answer { client_id, answer: answered });
                             }
                             _ => return Ok(()),
                         }
@@ -87,15 +94,30 @@ pub async fn play(
                         if update_question.is_err()  {
                             return Ok(())
                         };
-                        let question_num = *receiver.borrow();
                         let binding = games.read().await;
-                        let q = &binding.get(&game_id).unwrap().questions[question_num];
-                        let _ = stream.send_json(
+                        let x: GameState = receiver.borrow().clone();
+                        match x {
+                            GameState::Question(question_num) => {
+                                let q = &binding.get(&game_id).unwrap().questions[question_num];
+                                next_correct = q.answer;
+                                let _ = stream.send_json(
                                 &json!({
-                                    "type": "question",
+                                    "type": "answer",
                                     "question": q.question,
                                     "answers": q.answers,
                                 })).await;
+                            }
+                            GameState::ShowResult(question_num) => {
+                                let q = &binding.get(&game_id).unwrap().questions[question_num];
+                                let _ = stream.send_json(
+                                &json!({
+                                    "type": "question",
+                                    "correct": answered == q.answer,
+                                    "points": points,
+                                })).await;
+                            }
+                            GameState::Pending => unreachable!(),
+                        }
                     }
                 }
             }
@@ -118,8 +140,15 @@ pub struct Game {
     curr: usize,
     questions: Vec<Question>,
     sender: Sender<Protocol>,
-    switch_game: watch::Receiver<usize>,
+    game_state: watch::Receiver<GameState>,
     counter: usize,
+}
+
+#[derive(Debug, Clone)]
+enum GameState {
+    Question(usize),
+    ShowResult(usize),
+    Pending,
 }
 
 #[get("/play/host/<uuid>")]
@@ -131,7 +160,7 @@ pub async fn host<'a>(
     pool: &State<PgPool>,
 ) -> Option<ws::Channel<'a>> {
     let (sender, mut recv) = broadcast::channel(1);
-    let (curr_sender, curr_receiver) = watch::channel(0);
+    let (curr_sender, curr_receiver) = watch::channel(GameState::Pending);
     let id = OsRng::next_u32(&mut OsRng) & !2u32.pow(31);
     let questions = get_data(pool, &user, &uuid).await?.questions;
     let mut curr = 0;
@@ -139,7 +168,7 @@ pub async fn host<'a>(
         id,
         Game {
             sender,
-            switch_game: curr_receiver,
+            game_state: curr_receiver,
             curr: 0,
             questions: questions.clone(),
             quiz_uuid: uuid,
@@ -178,7 +207,7 @@ pub async fn host<'a>(
                             Value::String(x) if x == "next" => {
                                 let mut binding = games.write().await;
                                 let x = binding.get_mut(&id).unwrap();
-                                let _ = curr_sender.send(x.curr);
+                                let _ = curr_sender.send(GameState::Question(x.curr));
                                 answered.clear();
                                 stream.send_json(json!({
                                     "type": "question",
@@ -235,6 +264,7 @@ pub async fn host<'a>(
                             }
                         };
                         if players.keys().copied().collect::<HashSet<_>>() == answered {
+                            let _ = curr_sender.send(GameState::ShowResult(curr));
                             stream.send_json(json!({
                                 "type": "finished answers",
                             })).await;
