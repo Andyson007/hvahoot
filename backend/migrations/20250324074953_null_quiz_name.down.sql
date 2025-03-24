@@ -1,0 +1,1 @@
+ALTER TABLE hvahoots ALTER COLUMN name SET NOT NULL;

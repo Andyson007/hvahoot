@@ -133,7 +133,7 @@ pub async fn quizzes(user: User, pool: &State<PgPool>) -> Option<Json<Vec<Short>
     .ok()?
     .into_iter()
     .map(|x| Short {
-        name: x.name,
+        name: x.name.unwrap_or("".to_string()),
         uuid: x.uuid,
     })
     .collect();
