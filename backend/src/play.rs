@@ -216,7 +216,7 @@ pub async fn host<'a>(
                                 })).await;
                                 x.curr += 1;
                                 curr += 1;
-                                if curr == questions.len() {
+                                if curr > questions.len() {
                                     break 'game_loop;
                                 }
                             }
