@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Errormessage from "$lib/components/errormessage.svelte";
+  import Errormessage from "$lib/components/errormessage.svelte";
 
   let username: string = $state('');
   let password: string = $state('');
@@ -20,6 +20,7 @@
     });
 
     if (!resp.ok) error = (await resp.json().catch(() => {return {message: 'An error occured while parsing the response'}})).message;
+    else window.location.href = ''
   }
 </script>
 

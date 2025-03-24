@@ -52,15 +52,23 @@
     questions = questions;
   }
 
-  onMount(() => {
-    // Get a new Quiz UUID
+  onMount(async () => {
+    // Check if the user is trying to edit a quiz
     const uuid = page.url.searchParams.get('id');
     if (uuid) {
-      console.log('TODO: Load existing quiz');
+      const resp = await fetch('/quiz/' + uuid);
+      if (!resp.ok) {
+        // Get a new Quiz UUID
+        getNewHvahootID().then(uuid => { id = uuid; });
+      }
+      const quiz = await resp.json();
+      questions = quiz.questions;
+      name = quiz.name;
       newHvahoot = false;
       id = uuid;
     }
     else {
+      // Get a new Quiz UUID
       getNewHvahootID().then(uuid => { id = uuid; });
     }
   });
