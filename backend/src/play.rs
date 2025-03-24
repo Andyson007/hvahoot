@@ -256,7 +256,7 @@ pub async fn host<'a>(
                                     "type": "answer",
                                     "id": client_id,
                                 })).await;
-                                if answered.insert(client_id) && answer == questions[curr].answer {
+                                if answered.insert(client_id) && answer == questions[curr - 1].answer {
                                     if let Some(player) = players.get_mut(&client_id) {
                                         player.score += 1;
                                     }
