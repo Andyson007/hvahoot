@@ -1,10 +1,14 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 use argon2::password_hash::rand_core::{OsRng, RngCore};
 use rocket::{
     State,
     futures::{SinkExt, StreamExt},
     get,
+    serde::Serialize,
     tokio::{
         select,
         sync::{
@@ -14,8 +18,8 @@ use rocket::{
         },
     },
 };
-use rocket_ws::{self as ws, WebSocket};
-use serde_json::Value;
+use rocket_ws::{self as ws, WebSocket, stream::DuplexStream};
+use serde_json::{Value, json};
 use sqlx::PgPool;
 
 use crate::{
@@ -80,15 +84,12 @@ pub async fn play(
                         let question_num = *receiver.borrow();
                         let binding = games.read().await;
                         let q = &binding.get(&game_id).unwrap().questions[question_num];
-                        let _ = stream
-                            .send(ws::Message::Text(
-                                serde_json::to_string(&serde_json::json!({
+                        let _ = stream.send_json(
+                                &json!({
                                     "type": "question",
                                     "question": q.question,
                                     "answers": q.answers,
-                                }))
-                                .unwrap()))
-                                .await;
+                                })).await;
                     }
                 }
             }
@@ -149,6 +150,7 @@ pub async fn host<'a>(
                 .await;
 
             let mut players = HashMap::new();
+            let mut answered = HashSet::new();
             loop {
                 select! {
                     message = stream.next() => {
@@ -169,6 +171,7 @@ pub async fn host<'a>(
                                 let x = binding.get_mut(&id).unwrap();
                                 let _ = curr_sender.send(x.curr);
                                 x.curr += 1;
+                                answered.clear();
                             }
                             _ => return Ok(()),
                         }
@@ -183,13 +186,36 @@ pub async fn host<'a>(
                                 username,
                             } => {
                                 println!("{client_id} joined with {username}");
+                                stream.send_json(json!({
+                                    "type": "join",
+                                    "username": &username,
+                                    "id": client_id
+                                })).await;
                                 players.insert(client_id, username);
                             },
                             Protocol::Disconnected { client_id } => {
-                                players.remove(&client_id);
+                                if let Some(old_name) = players.remove(&client_id) {
+                                    stream.send_json(json!({
+                                        "type": "disconnect",
+                                        "username": old_name,
+                                        "id": client_id,
+                                    })).await;
+                                }
                                 println!("{client_id} left");
                             },
-                            Protocol::Answer{client_id, answer} => eprintln!("{client_id} answered {answer}"),
+                            Protocol::Answer{client_id, answer} => {
+                                eprintln!("{client_id} answered {answer}");
+                                stream.send_json(json!({
+                                    "type": "answer",
+                                    "id": client_id,
+                                })).await;
+                                answered.insert(client_id);
+                            }
+                        };
+                        if players.keys().copied().collect::<HashSet<_>>() == answered {
+                            stream.send_json(json!({
+                                "type": "finished answers",
+                            })).await;
                         }
                     },
 
@@ -202,3 +228,20 @@ pub async fn host<'a>(
 
 #[get("/path")]
 pub fn check(_u: User) {}
+
+trait SendJson {
+    fn send_json<T>(&mut self, data: T) -> impl Future<Output = ()>
+    where
+        T: Serialize;
+}
+
+impl SendJson for DuplexStream {
+    async fn send_json<T>(&mut self, data: T)
+    where
+        T: Serialize,
+    {
+        let _ = self
+            .send(ws::Message::Text(serde_json::to_string(&data).unwrap()))
+            .await;
+    }
+}
