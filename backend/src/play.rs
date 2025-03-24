@@ -19,7 +19,7 @@ use rocket::{
     },
 };
 use rocket_ws::{self as ws, WebSocket, stream::DuplexStream};
-use serde_json::{Value, json};
+use serde_json::{Number, Value, json};
 use sqlx::PgPool;
 
 use crate::{
@@ -72,7 +72,13 @@ pub async fn play(
                                 sender.send(Protocol::Connected{client_id, username: username.clone()}).unwrap();
                             }
                             Value::String(x) if x == "answer" => {
-                                todo!()
+                                let Some(Value::Number(x)) = obj.get("username") else {
+                                    return Ok(());
+                                };
+                                let Some(num) = x.as_i64() else {
+                                    return Ok(());
+                                };
+                                let _ = sender.send(Protocol::Answer { client_id, answer: num as i32 });
                             }
                             _ => return Ok(()),
                         }
