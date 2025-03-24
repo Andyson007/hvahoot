@@ -210,7 +210,7 @@ pub async fn host<'a>(
                                 }
                                 let mut binding = games.write().await;
                                 let x = binding.get_mut(&id).unwrap();
-                                let _ = curr_sender.send(GameState::Question(x.curr));
+                                let _ = curr_sender.send(GameState::Question(curr));
                                 answered.clear();
                                 stream.send_json(json!({
                                     "type": "question",
@@ -264,7 +264,7 @@ pub async fn host<'a>(
                             }
                         };
                         if players.keys().copied().collect::<HashSet<_>>() == answered {
-                            let _ = curr_sender.send(GameState::ShowResult(curr));
+                            let _ = curr_sender.send(GameState::ShowResult(curr - 1));
                             stream.send_json(json!({
                                 "type": "summary",
                                 "scores": players,
